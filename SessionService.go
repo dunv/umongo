@@ -24,11 +24,11 @@ func NewDbSession(connectionString string, dbName string) (*DbSession, error) {
 	tlsConfig.InsecureSkipVerify = true
 
 	// Parse string
-	dialInfo, err1 := mgo.ParseURL(connectionString)
-	dialInfo.Direct = true
-	if err1 != nil {
-		return nil, err1
+	dialInfo, err := mgo.ParseURL(connectionString)
+	if err != nil {
+		return nil, err
 	}
+	dialInfo.Direct = true
 
 	// TODO: this is still quite dirty -> if mongodb is in the
 	// ConnectionString: assume we want to connect to Atlas via SSL
@@ -40,10 +40,10 @@ func NewDbSession(connectionString string, dbName string) (*DbSession, error) {
 
 	}
 
-	dbSession, err2 := mgo.DialWithInfo(dialInfo)
-	if err2 != nil {
-		log.Printf("Error establishing connection %s \n", err2)
-		return nil, err2
+	dbSession, err := mgo.DialWithInfo(dialInfo)
+	if err != nil {
+		log.Printf("Error establishing connection %s \n", err)
+		return nil, err
 	}
 
 	log.Printf("MongoDB connected.")
