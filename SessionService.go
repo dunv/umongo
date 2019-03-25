@@ -2,7 +2,6 @@ package umongo
 
 import (
 	"context"
-	"log"
 	"time"
 
 	"go.mongodb.org/mongo-driver/mongo"
@@ -12,8 +11,6 @@ import (
 
 // NewDbClient create new session
 func NewDbClient(connectionString string) (*mongo.Client, error) {
-	log.Printf("Connecting to MongoDB...")
-
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(connectionString))
 	if err != nil {
@@ -23,7 +20,5 @@ func NewDbClient(connectionString string) (*mongo.Client, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	log.Printf("MongoDB connected.")
 	return client, nil
 }
