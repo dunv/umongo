@@ -10,8 +10,8 @@ import (
 )
 
 // NewDbClient create new session
-func NewDbClient(connectionString string) (*mongo.Client, error) {
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+func NewDbClient(connectionString string, timeout time.Duration) (*mongo.Client, error) {
+	ctx, _ := context.WithTimeout(context.Background(), timeout)
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(connectionString))
 	if err != nil {
 		return nil, err
