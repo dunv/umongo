@@ -12,18 +12,18 @@ import (
 // DataStructure for storing information for a collection and a handle for modifying it
 // A convenience function for creating indexes is provided
 type ModelService struct {
-	Database         string
-	Collection       string
-	CollectionHandle *mongo.Collection
-	Indexes          []mongo.IndexModel
+	Database   string
+	Collection string
+	Col        *mongo.Collection
+	Indexes    []mongo.IndexModel
 }
 
 func NewModelService(client *mongo.Client, database string, collection string, indexes []mongo.IndexModel) ModelService {
 	return ModelService{
-		Database:         database,
-		Collection:       collection,
-		CollectionHandle: client.Database(database).Collection(collection),
-		Indexes:          indexes,
+		Database:   database,
+		Collection: collection,
+		Col:        client.Database(database).Collection(collection),
+		Indexes:    indexes,
 	}
 }
 
@@ -35,7 +35,7 @@ func (s ModelService) EnsureIndexes() error {
 	if s.Indexes != nil {
 		// Load existing indexes
 		ctx := context.Background()
-		indexView := s.CollectionHandle.Indexes()
+		indexView := s.Col.Indexes()
 		cur, err := indexView.List(ctx)
 		if err != nil {
 			return err
