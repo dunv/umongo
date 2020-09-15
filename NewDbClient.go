@@ -23,8 +23,8 @@ func NewDbClient(connectionString string, appName string, timeout time.Duration)
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	client, err := mongo.Connect(
 		ctx,
-		options.Client().SetAppName(appName),
 		options.Client().ApplyURI(connectionString),
+		options.Client().SetAppName(appName),
 		options.Client().SetRegistry(reg),
 	)
 	if err != nil {
