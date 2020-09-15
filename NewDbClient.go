@@ -12,7 +12,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
-func NewDbClient(connectionString string, appName string, timeout time.Duration) (*mongo.Client, context.CancelFunc, error) {
+func NewDbClient(connectionString string, timeout time.Duration) (*mongo.Client, context.CancelFunc, error) {
 	// Register mapType as default EmbeddedDocument "marshalInto"-type
 	// That way if we specify an interface to be rendered into we do not end up with
 	// { "Key": "xxx", "Value": "yyy"} but with { "xxx": "yyy" }
@@ -24,7 +24,6 @@ func NewDbClient(connectionString string, appName string, timeout time.Duration)
 	client, err := mongo.Connect(
 		ctx,
 		options.Client().ApplyURI(connectionString),
-		options.Client().SetAppName(appName),
 		options.Client().SetRegistry(reg),
 	)
 	if err != nil {
