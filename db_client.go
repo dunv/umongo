@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/bsontype"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
@@ -18,7 +17,8 @@ func NewDbClient(connectionString string, appName string, timeout time.Duration)
 	// { "Key": "xxx", "Value": "yyy"} but with { "xxx": "yyy" }
 	// https://jira.mongodb.org/browse/GODRIVER-988
 	tM := reflect.TypeOf(bson.M{})
-	reg := bson.NewRegistryBuilder().RegisterTypeMapEntry(bsontype.EmbeddedDocument, tM).Build()
+	reg := bson.NewRegistry()
+	reg.RegisterTypeMapEntry(bson.TypeEmbeddedDocument, tM)
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	client, err := mongo.Connect(
