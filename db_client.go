@@ -11,7 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
-func NewDbClient(connectionString string, appName string, timeout time.Duration) (*mongo.Client, context.CancelFunc, error) {
+func NewDbClient(connectionString string, appName string, timeout time.Duration, opts ...*options.ClientOptions) (*mongo.Client, context.CancelFunc, error) {
 	// Register mapType as default EmbeddedDocument "marshalInto"-type
 	// That way if we specify an interface to be rendered into we do not end up with
 	// { "Key": "xxx", "Value": "yyy"} but with { "xxx": "yyy" }
@@ -21,11 +21,15 @@ func NewDbClient(connectionString string, appName string, timeout time.Duration)
 	reg.RegisterTypeMapEntry(bson.TypeEmbeddedDocument, tM)
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	client, err := mongo.Connect(
-		ctx,
+
+	opts = append(opts,
 		options.Client().ApplyURI(connectionString),
 		options.Client().SetAppName(appName),
 		options.Client().SetRegistry(reg),
+	)
+	client, err := mongo.Connect(
+		ctx,
+		opts...,
 	)
 	if err != nil {
 		return nil, cancel, err
