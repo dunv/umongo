@@ -1,42 +1,58 @@
 package umongo
 
 import (
-	"context"
 	"reflect"
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.mongodb.org/mongo-driver/mongo/readpref"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/mongo/readpref"
 )
 
-func NewDbClient(connectionString string, appName string, timeout time.Duration, opts ...*options.ClientOptions) (*mongo.Client, context.CancelFunc, error) {
-	// Register mapType as default EmbeddedDocument "marshalInto"-type
-	// That way if we specify an interface to be rendered into we do not end up with
-	// { "Key": "xxx", "Value": "yyy"} but with { "xxx": "yyy" }
-	// https://jira.mongodb.org/browse/GODRIVER-988
-	tM := reflect.TypeOf(bson.M{})
-	reg := bson.NewRegistry()
-	reg.RegisterTypeMapEntry(bson.TypeEmbeddedDocument, tM)
-
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-
-	opts = append(opts,
-		options.Client().ApplyURI(connectionString),
-		options.Client().SetAppName(appName),
-		options.Client().SetRegistry(reg),
-	)
-	client, err := mongo.Connect(
-		ctx,
-		opts...,
-	)
-	if err != nil {
-		return nil, cancel, err
+func NewClient(
+	connectionString string,
+	appName string,
+	connectTimeout time.Duration,
+	opts ...applyOption,
+) (*mongo.Client, error) {
+	usedOptions := &clientOpts{
+		requireSuccessfulPing:    nil,
+		additionalClientOpts:     []*options.ClientOptions{},
+		registerEmbeddedDocument: true,
 	}
-	err = client.Ping(ctx, readpref.Primary())
-	if err != nil {
-		return nil, cancel, err
+
+	for _, opt := range opts {
+		opt(usedOptions)
 	}
-	return client, cancel, nil
+
+	mongoOpts := options.Client().
+		ApplyURI(connectionString).
+		SetConnectTimeout(connectTimeout).
+		SetAppName(appName)
+
+	if usedOptions.registerEmbeddedDocument {
+		// Register mapType as default EmbeddedDocument "marshalInto"-type
+		// That way if we specify an interface to be rendered into we do not end up with
+		// { "Key": "xxx", "Value": "yyy"} but with { "xxx": "yyy" }
+		// https://jira.mongodb.org/browse/GODRIVER-988
+		tM := reflect.TypeOf(bson.M{})
+		reg := bson.NewRegistry()
+		reg.RegisterTypeMapEntry(bson.TypeEmbeddedDocument, tM)
+		mongoOpts.SetRegistry(reg)
+	}
+
+	c, err := mongo.Connect(append([]*options.ClientOptions{mongoOpts}, usedOptions.additionalClientOpts...)...)
+	if err != nil {
+		return nil, err
+	}
+
+	if usedOptions.requireSuccessfulPing != nil {
+		err = c.Ping(*usedOptions.requireSuccessfulPing, readpref.Primary())
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return c, nil
 }
